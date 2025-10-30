@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User & Transaction Graph</title>
+  <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: #f4f6f8;
+    }
+    #toolbar {
+      background: white;
+      padding: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 10;
+    }
+    #cy {
+      width: 100vw;
+      height: calc(100vh - 50px);
+      position: absolute;
+      top: 50px;
+      left: 0;
+    }
+    button {
+      padding: 6px 12px;
+      background: #0074D9;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background: #005fa3; }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button onclick="loadGraph()">Load Graph</button>
+  </div>
+  <div id="cy"></div>
+
+  <script>
+    async function loadGraph() {
+      const users = await fetch('/users').then(res => res.json());
+      const txns = await fetch('/transactions').then(res => res.json());
+
+      const nodes = [];
+      const edges = [];
+
+      // Add user nodes
+      users.forEach(u => {
+        nodes.push({
+          data: { id: u.u.user_id, label: u.u.name },
+          classes: 'user'
+        });
+      });
+
+      // Add transaction nodes
+      txns.forEach(t => {
+        nodes.push({
+          data: { id: t.t.txn_id, label: 'Txn ' + t.t.txn_id },
+          classes: 'txn'
+        });
+      });
+
+      // Get user→transaction and transaction→transaction relationships
+      for (let user of users) {
+        const rels = await fetch(`/relationships/user/${user.u.user_id}`).then(r => r.json());
+        rels.forEach(rel => {
+          const target = rel.connected.user_id || rel.connected.txn_id;
+          edges.push({
+            data: {
+              id: user.u.user_id + '_' + target,
+              source: user.u.user_id,
+              target: target,
+              label: rel.relation
+            }
+          });
+        });
+      }
+
+      const cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: { nodes, edges },
+        style: [
+          {
+            selector: 'node.user',
+            style: { 'background-color': '#0074D9', 'label': 'data(label)', 'color': 'white' }
+          },
+          {
+            selector: 'node.txn',
+            style: { 'background-color': '#FF851B', 'label': 'data(label)', 'color': 'white' }
+          },
+          {
+            selector: 'edge',
+            style: { 'width': 2, 'line-color': '#aaa', 'curve-style': 'bezier' }
+          }
+        ],
+        layout: { name: 'cose', animate: true }
+      });
+
+      cy.on('tap', 'node', function (evt) {
+        const node = evt.target;
+        alert(`Node: ${node.id()} (${node.data('label')})`);
+      });
+    }
+  </script>
+</body>
+</html>
