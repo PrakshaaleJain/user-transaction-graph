@@ -57,4 +57,4 @@ def seed_data(num_users=50, num_txns=100000):
 
 
 if __name__ == "__main__":
-    seed_data(num_users=10, num_txns=100000)
+    seed_data(num_users=10, num_txns=100)
