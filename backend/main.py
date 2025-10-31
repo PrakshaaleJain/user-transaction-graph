@@ -36,12 +36,15 @@ def transaction_relationships(txn_id: str):
     return relationships.get_transaction_relationships(txn_id)
 
 
-frontend_path = os.path.join(os.path.dirname(__file__), '../frontend')
-app.mount("/frontend", StaticFiles(directory=frontend_path), name="frontend")
+frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
 
-@app.get("/")
-def serve_frontend():
-    return FileResponse(os.path.join(frontend_path, "index.html"))
+# Only mount if frontend folder actually exists
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+else:
+    @app.get("/")
+    def home():
+        return {"message": "Backend is running. Frontend not found in container."}
 
 
 @app.get("/export/users/csv")
