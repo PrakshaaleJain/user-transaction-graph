@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Copy backend source and requirements
 COPY backend/ /app/backend/
+COPY frontend/ /app/frontend/
 COPY requirements.txt /app/
 
 # Install dependencies
