@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy backend source and requirements
 COPY backend/ /app/backend/
-COPY backend/requirements.txt /app/
+COPY requirements.txt /app/
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
